@@ -42,12 +42,12 @@ vec3 voronoi2( in vec2 x ) {
     return vec3(md, mr);
 }
 
-vec3 voronoi( in vec2 x, vec2 seed ) {
+vec3 voronoi( in vec2 x) {
     vec2 n = floor(x);
     vec2 f = fract(x);
 
     vec2 c = random2(n);
-    c = 0.5 + 0.5*sin( u_time + 6.2831*random2(n)*seed );
+    c = 0.5 + 0.5*sin( u_time + 6.2831*random2(n) );
     vec2 r3 = c - f;
     
     vec2 mg, mr;
@@ -56,15 +56,17 @@ vec3 voronoi( in vec2 x, vec2 seed ) {
         for (int i1= -1; i1 <= 1; i1++) {
             vec2 g = vec2(float(i1),float(j1));
             vec2 o = random2( n + g );
-            o = 0.4 + 0.4*sin( u_time + 6.2831*o*seed );
+            o = 0.5 + 0.5*sin( u_time + 6.2831*o );
             vec2 r1 = g + o - f;
 
+            md += 1.-smoothstep(0.02,0.03,length(r1));
+            
             vec2 r2;
             for (int j2= -1; j2 <= 1; j2++) {
                 for (int i2= -1; i2 <= 1; i2++) {
                 vec2 g = vec2(float(i2),float(j2));
                 vec2 o = random2( n + g );
-                o = 0.4 + 0.4*sin( u_time + 6.2831*o );
+                o = 0.5 + 0.5*sin( u_time + 6.2831 * o );
                 r2 = g + o - f;
                     
                 float a = 1.;
@@ -72,17 +74,13 @@ vec3 voronoi( in vec2 x, vec2 seed ) {
                 a *= 1.-step(1.1,abs(float(i2)-float(i1)));
 
                     
-                float d = 1.-smoothstep(0.,1.5,length(r2-r1));
+                float d = 1.-smoothstep(0.,1.6,length(r2-r1));
                     
-                md += (1.-smoothstep(-1.0,-0.999, dot(normalize(r1), normalize(r2))))*d*a;
+                md += (1.-smoothstep(-1.0,-0.99, dot(normalize(r1), normalize(r2)) ))*d*a;
                 }
             }
-            
-            // md += 1.-smoothstep(-1.0,-0.999, dot(normalize(r1), normalize(r3)));
-            // float d = dot(r,r);
         }
     }
-    // float d = 1.-length(f-c);
     return vec3(md/2.);
 }
 
@@ -90,15 +88,14 @@ void main() {
     vec2 st = gl_FragCoord.xy/u_resolution.xy;
     st.x *= u_resolution.x/u_resolution.y;
     vec3 color = vec3(0.);
-
+	color += mix(vec3(0.077,0.115,0.190), vec3(0.042,0.110,0.245), 1.-length(st - vec2(0.5)));
     // Scale
     st *= 5.;
     
-    vec3 c = voronoi(st, random2(vec2(545.34456786)));
-    color = mix( vec3(0.051,0.053,0.170), vec3(0.749,0.981,1.000), c.x );
+    vec3 c = voronoi(st);
+    color = mix( color, vec3(0.253,0.330,0.495), c.x );
 
-    c = voronoi(st, (random2(vec2(134.456786))));
-    color += mix( vec3(0.), vec3(0.995,0.179,0.207), c.x );
+    
     
     gl_FragColor = vec4(color,1.0);
 }
